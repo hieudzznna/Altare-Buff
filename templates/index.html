@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Altare Tool - Đại ca TrueHieu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body { font-family: 'Google Sans', sans-serif; background-color: #f0f4f8; color: #1a1a1a; }
+        .card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); background: #ffffff; }
+        .header-title { color: #007bff; font-weight: 700; text-align: center; margin-bottom: 30px; }
+        .btn-primary { background-color: #007bff; border: none; border-radius: 10px; padding: 12px; font-weight: 500; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .form-control { border-radius: 10px; border: 1px solid #dee2e6; padding: 12px; }
+        #log-container { background: #ffffff; border: 1px solid #e1e8ed; border-radius: 12px; height: 300px; overflow-y: auto; padding: 15px; font-size: 0.9rem; font-family: 'Courier New', Courier, monospace; }
+        .log-info { color: #555; }
+        .log-success { color: #28a745; font-weight: bold; }
+        .log-warning { color: #fd7e14; }
+        .log-error { color: #dc3545; }
+        .log-finish { color: #007bff; font-weight: bold; background: #e7f3ff; border-radius: 5px; padding: 2px 5px; }
+        label { font-weight: 500; color: #495057; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h2 class="header-title">Altare Control Panel</h2>
+        
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label>Email / Username</label><input type="text" id="email" class="form-control" placeholder="Nhập tài khoản"></div>
+                        <div class="col-md-6"><label>Mật khẩu</label><input type="password" id="password" class="form-control" placeholder="Nhập mật khẩu"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card p-4 h-100 shadow-sm border-top border-primary border-4">
+                    <h5 class="mb-3 text-primary">Treo AFK</h5>
+                    <button class="btn btn-primary w-100 mb-2" onclick="callApi('/api/start_afk')">Bắt đầu AFK</button>
+                    <button class="btn btn-outline-secondary w-100" onclick="callApi('/api/stop_afk')">Dừng AFK</button>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card p-4 shadow-sm border-top border-info border-4">
+                    <h5 class="mb-3 text-info">Loop Claim & Transfer</h5>
+                    <div class="row g-2 mb-3">
+                        <div class="col-3"><label class="small">Vòng lặp</label><input type="number" id="loops" class="form-control" value="10"></div>
+                        <div class="col-3"><label class="small">Delay (s)</label><input type="number" id="delay" class="form-control" value="3"></div>
+                        <div class="col-3"><label class="small">Người nhận</label><input type="text" id="transfer_to" class="form-control" value="@trueteamcommunity"></div>
+                        <div class="col-3"><label class="small">Số tiền</label><input type="number" id="transfer_amount" class="form-control" value="7500"></div>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="runLoop()">Chạy vòng lặp ngay</button>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card p-4">
+                    <h5 class="mb-3 d-flex justify-content-between align-items-center">
+                        <span>Live Logs</span>
+                        <button class="btn btn-sm btn-light border" onclick="document.getElementById('log-container').innerHTML=''">Xóa Log</button>
+                    </h5>
+                    <div id="log-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const logContainer = document.getElementById('log-container');
+
+        socket.on('new_log', function(data) {
+            const div = document.createElement('div');
+            div.className = 'log-' + data.type;
+            div.innerText = data.msg;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            if (data.type === 'finish') {
+                alert("🎉 Thông báo: Đại ca ơi, đã hoàn thành tiến trình Buff rồi ạ!");
+            }
+        });
+
+        function callApi(url, data = {}) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, password, ...data})
+            }).then(res => res.json()).then(res => { if(res.message) alert(res.message); });
+        }
+
+        function runLoop() {
+            callApi('/api/start_loop', {
+                loops: document.getElementById('loops').value,
+                delay: document.getElementById('delay').value,
+                transfer_to: document.getElementById('transfer_to').value,
+                transfer_amount: document.getElementById('transfer_amount').value
+            });
+        }
+    </script>
+</body>
+</html>
